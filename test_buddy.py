@@ -1,10 +1,15 @@
 import data_buddy
 
-# Let's imagine this is data from a recent project or game
-scores = [85, 90, 78, 92, 88]
+# Real-world scenario: Most scores are around 80-90, but one is 500 (outlier)
+scores = [85, 90, 78, 92, 88, 500]
 
-# Using our custom package!
+# Backward Compatibility check: Old function still works!
 average_score = data_buddy.get_average(scores)
 
-print(f"The data you provided is: {scores}")
-print(f"The calculated average is: {average_score}")
+# New Feature check:
+median_score = data_buddy.get_median(scores)
+
+print(f"Data: {scores}")
+print(f"The Average (Mean): {average_score:.2f}")
+print(f"The Median (Middle): {median_score}")
+
