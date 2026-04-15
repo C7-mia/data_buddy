@@ -1,0 +1,12 @@
+ [build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data_buddy"
+version = "0.0.1"
+authors = [
+  { name="Akena Nicholas", email="akidirita4@gmail.com" },
+]
+description = "A simple package for quick data analysis."
+requires-python = ">=3.7"
