@@ -1,15 +1,20 @@
-import data_buddy
+ import data_buddy
 
-# Real-world scenario: Most scores are around 80-90, but one is 500 (outlier)
+# Data set given
 scores = [85, 90, 78, 92, 88, 500]
 
-# Backward Compatibility check: Old function still works!
-average_score = data_buddy.get_average(scores)
-
-# New Feature check:
-median_score = data_buddy.get_median(scores)
+# All functions working together on the SAME data:
+avg = data_buddy.get_average(scores)
+med = data_buddy.get_median(scores)
+low = data_buddy.get_min(scores)
+hi  = data_buddy.get_max(scores)
 
 print(f"Data: {scores}")
-print(f"The Average (Mean): {average_score:.2f}")
-print(f"The Median (Middle): {median_score}")
+print("-" * 30)
+print(f"Average: {avg:.2f}") # Still works!
+print(f"Median:  {med}")      # Still works!
+print(f"Minimum: {low}")      # New!
+print(f"Maximum: {hi}")       # New!
+
+
 

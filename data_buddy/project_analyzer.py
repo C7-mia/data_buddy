@@ -21,3 +21,14 @@ def get_median(numbers):
         return 0
     return statistics.median(numbers)
 
+def get_min(numbers):
+    """Returns the smallest number in the list."""
+    if not numbers:
+        return 0
+    return min(numbers)
+
+def get_max(numbers):
+    """Returns the largest number in the list."""
+    if not numbers:
+        return 0
+    return max(numbers)
