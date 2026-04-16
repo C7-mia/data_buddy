@@ -61,3 +61,37 @@ plt.show()
         f.write(code_template)
     print(f"✨ Success! Your code is saved in: generated_analysis.py")
 
+import matplotlib.pyplot as plt
+
+def create_visual_report(filename):
+    """Generates and saves a visual chart of the data."""
+    try:
+        with open(filename, 'r') as file:
+            data = [float(line.strip()) for line in file if line.strip()]
+        
+        if not data:
+            print("❌ Error: No data for visualization.")
+            return
+
+        # Initialize the figure canvas
+        plt.figure(figsize=(10, 5))
+        
+        # Draw a trend line and volume bars
+        plt.plot(data, marker='o', linestyle='-', color='b', label='Data Trend')
+        plt.bar(range(len(data)), data, alpha=0.3, color='g', label='Volume')
+        
+        # Add professional labeling
+        plt.title(f"Visual Analysis Report: {filename}")
+        plt.xlabel("Entry Number")
+        plt.ylabel("Value")
+        plt.legend()
+        plt.grid(True, linestyle='--', alpha=0.6)
+        
+        # Save the visualization to a file
+        output_image = "business_chart.png"
+        plt.savefig(output_image)
+        plt.close()
+        print(f"🖼️  Chart successfully saved as: {output_image}")
+
+    except Exception as e:
+        print(f"❌ Visualization Error: {e}")
