@@ -1,4 +1,4 @@
- [build-system]
+[build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
@@ -10,3 +10,14 @@ authors = [
 ]
 description = "A simple package for quick data analysis."
 requires-python = ">=3.7"
+dependencies = [
+    "pandas>=1.0.0",
+    "matplotlib>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+]
