@@ -1,4 +1,8 @@
-streamlit
-pandas
-numpy
-Pillow
+flask==2.3.2
+flask-cors==4.0.0
+pandas==2.0.3
+numpy==1.24.3
+scipy==1.11.1
+matplotlib==3.7.1
+Pillow==10.0.0
+gunicorn==21.2.0
