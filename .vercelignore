@@ -1,0 +1,8 @@
+*.pyc
+__pycache__/
+.git
+.gitignore
+node_modules/
+.env.local
+extracted_data/
+.DS_Store
