@@ -92,3 +92,63 @@ def extract_csv_from_ipynb(ipynb_file):
             return f"📓 Notebook detected with {code_cells} code cells. Run it to generate CSVs."
     except Exception as e:
         return f"Error reading notebook: {e}"
+
+
+# --- PART 3: Statistical Rigor Analysis ---
+def run_rigorous_analysis(filename):
+    """
+    Run comprehensive statistical analysis with confidence intervals, 
+    variance, and outlier detection.
+    """
+    from .statistics_engine import StatisticalAnalyzer
+    
+    try:
+        with open(filename, 'r') as file:
+            data = [float(line.strip()) for line in file if line.strip()]
+        
+        if not data:
+            print("❌ Error: File is empty.")
+            return
+        
+        analyzer = StatisticalAnalyzer(data)
+        report = analyzer.get_summary_report()
+        
+        print(f"\n{'='*60}")
+        print(f"📊 RIGOROUS STATISTICAL ANALYSIS: {filename}")
+        print(f"{'='*60}\n")
+        
+        # Basic statistics
+        print("📈 BASIC STATISTICS:")
+        print(f"  • Sample Size: {report['basics']['count']}")
+        print(f"  • Mean: {report['basics']['mean']}")
+        print(f"  • Median: {report['basics']['median']}")
+        print(f"  • Range: [{report['basics']['min']}, {report['basics']['max']}]")
+        
+        # Statistical rigor
+        print("\n📐 STATISTICAL RIGOR:")
+        print(f"  • Std Dev: {report['statistical_rigor']['std_dev']}")
+        print(f"  • Variance: {report['statistical_rigor']['variance']}")
+        ci = report['statistical_rigor']['confidence_interval_95']
+        print(f"  • 95% CI: [{ci['lower']}, {ci['upper']}]")
+        print(f"  • {ci['interpretation']}")
+        
+        # Outliers
+        print("\n⚠️  OUTLIER DETECTION:")
+        print(f"  • Outliers Found: {report['outliers']['count']} ({report['outliers']['percentage']}%)")
+        if report['outliers']['details']:
+            print(f"  • Examples:")
+            for outlier in report['outliers']['details']:
+                print(f"    - Position {outlier['index']}: {outlier['value']} ({outlier['type']})")
+        
+        # Data Quality
+        print("\n✅ DATA QUALITY ASSESSMENT:")
+        print(f"  • Quality Score: {report['data_quality']['score']}/100 {report['data_quality']['rating']}")
+        print(f"  • Completeness: {report['data_quality']['completeness']}")
+        
+        print(f"\n{'='*60}\n")
+        
+        return analyzer
+        
+    except Exception as e:
+        print(f"❌ Analysis Error: {e}")
+        return None
