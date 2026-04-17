@@ -1,49 +1,637 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Data Buddy Web</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 Universal Data Buddy - Web Analysis</title>
     <style>
-        body { font-family: Arial; margin: 20px; background: #f5f5f5; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
-        h1 { color: #333; }
-        input, button { padding: 10px; margin: 10px 0; }
-        .results { margin-top: 20px; }
-        .metric { display: inline-block; margin: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .upload-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px dashed #667eea;
+        }
+        
+        .upload-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 15px 25px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-label:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .filename {
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 25px;
+            font-size: 1em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-analyze {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-analyze:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-reset {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .btn-reset:hover {
+            background: #dee2e6;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .results.active {
+            display: block;
+        }
+        
+        .results h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .metric-card h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .metric-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .metric-card .unit {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        .confidence-interval {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .confidence-interval h4 {
+            color: #1565c0;
+            margin-bottom: 8px;
+        }
+        
+        .confidence-interval p {
+            color: #555;
+            font-size: 0.95em;
+        }
+        
+        .outliers-section {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .outliers-section h4 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+        
+        .quality-section {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .quality-section h4 {
+            color: #155724;
+            margin-bottom: 8px;
+        }
+        
+        .chart-container {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .error.active {
+            display: block;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .success.active {
+            display: block;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .tab:hover {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📊 Data Buddy - Web Analysis</h1>
-        <input type="file" id="file" accept=".csv" />
-        <button onclick="analyzeFile()">Analyze</button>
+        <div class="header">
+            <h1>🌍 Universal Data Buddy</h1>
+            <p>Professional Data Analysis with Statistical Rigor</p>
+        </div>
         
-        <div id="results" class="results"></div>
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h2>📁 Upload Your CSV File</h2>
+                <div class="file-input-wrapper">
+                    <input type="file" id="file" accept=".csv" />
+                    <label for="file" class="file-input-label">
+                        📤 Click to select CSV file or drag and drop
+                    </label>
+                </div>
+                <div class="filename" id="filename"></div>
+                
+                <div class="button-group">
+                    <button class="btn-analyze" onclick="analyzeFile()" id="analyzeBtn">
+                        ✨ Analyze
+                    </button>
+                    <button class="btn-reset" onclick="resetForm()">
+                        🔄 Reset
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Messages -->
+            <div class="success" id="successMsg"></div>
+            <div class="error" id="errorMsg"></div>
+            
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px; color: #667eea;">Analyzing your data...</p>
+            </div>
+            
+            <!-- Results -->
+            <div class="results" id="results">
+                <h2>📊 Analysis Results</h2>
+                
+                <!-- Tabs -->
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('basics')">📈 Basics</div>
+                    <div class="tab" onclick="showTab('rigor')">📐 Statistical Rigor</div>
+                    <div class="tab" onclick="showTab('outliers')">⚠️ Outliers</div>
+                    <div class="tab" onclick="showTab('quality')">✅ Quality</div>
+                </div>
+                
+                <!-- Basic Statistics Tab -->
+                <div class="tab-content active" id="basics">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h3>Sample Size</h3>
+                            <div class="value" id="count">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Mean</h3>
+                            <div class="value" id="mean">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Median</h3>
+                            <div class="value" id="median">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Minimum</h3>
+                            <div class="value" id="min">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Maximum</h3>
+                            <div class="value" id="max">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Range</h3>
+                            <div class="value" id="range">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistical Rigor Tab -->
+                <div class="tab-content" id="rigor">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h3>Standard Deviation</h3>
+                            <div class="value" id="stdDev">-</div>
+                            <div class="unit">Measures data spread</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Variance</h3>
+                            <div class="value" id="variance">-</div>
+                            <div class="unit">Squared std dev</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Coefficient of Variation</h3>
+                            <div class="value" id="cv">-</div>
+                            <div class="unit">Relative variability</div>
+                        </div>
+                    </div>
+                    
+                    <div class="confidence-interval">
+                        <h4>🎯 95% Confidence Interval</h4>
+                        <p><strong>Range:</strong> <span id="ciRange">-</span></p>
+                        <p><strong>Interpretation:</strong> We are 95% confident the true population mean falls within this range.</p>
+                        <p><strong>Details:</strong> <span id="ciInterpretation">-</span></p>
+                    </div>
+                </div>
+                
+                <!-- Outliers Tab -->
+                <div class="tab-content" id="outliers">
+                    <div class="outliers-section">
+                        <h4>⚠️ Outlier Detection</h4>
+                        <p><strong>IQR Method Outliers:</strong> <span id="outlierCount">-</span></p>
+                        <p><strong>Outlier Percentage:</strong> <span id="outlierPercent">-</span></p>
+                        <p><strong>Note:</strong> Outliers detected using IQR (Interquartile Range) method. These may indicate errors or genuinely extreme values.</p>
+                    </div>
+                </div>
+                
+                <!-- Quality Tab -->
+                <div class="tab-content" id="quality">
+                    <div class="quality-section">
+                        <h4>✅ Data Quality Assessment</h4>
+                        <p><strong>Quality Score:</strong> <span id="qualityScore">-</span>/100</p>
+                        <p><strong>Rating:</strong> <span id="qualityRating">-</span></p>
+                        <p><strong>Data Completeness:</strong> <span id="completeness">-</span></p>
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div class="chart-container">
+                    <img id="chart" src="" alt="Analysis visualization" style="display:none;">
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Made with ❤️ by Data Buddy Team | Version 2.0 | <a href="#" style="color: #667eea; text-decoration: none;">GitHub</a></p>
+        </div>
     </div>
-
+    
     <script>
-        function analyzeFile() {
-            let file = document.getElementById('file').files[0];
-            let formData = new FormData();
+        // Update filename display
+        document.getElementById('file').addEventListener('change', function(e) {
+            const filename = e.target.files[0]?.name || '';
+            document.getElementById('filename').textContent = filename ? `Selected: ${filename}` : '';
+        });
+        
+        // Drag and drop
+        const fileInput = document.getElementById('file');
+        const fileLabel = document.querySelector('.file-input-label');
+        
+        fileLabel.addEventListener('dragover', e => {
+            e.preventDefault();
+            fileLabel.style.background = '#667eea';
+            fileLabel.style.color = 'white';
+        });
+        
+        fileLabel.addEventListener('dragleave', e => {
+            fileLabel.style.background = 'white';
+            fileLabel.style.color = 'inherit';
+        });
+        
+        fileLabel.addEventListener('drop', e => {
+            e.preventDefault();
+            fileLabel.style.background = 'white';
+            fileLabel.style.color = 'inherit';
+            fileInput.files = e.dataTransfer.files;
+            document.getElementById('filename').textContent = `Selected: ${fileInput.files[0].name}`;
+        });
+        
+        function showMessage(type, message) {
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (type === 'success') {
+                successMsg.textContent = message;
+                successMsg.classList.add('active');
+                errorMsg.classList.remove('active');
+            } else {
+                errorMsg.textContent = message;
+                errorMsg.classList.add('active');
+                successMsg.classList.remove('active');
+            }
+            
+            setTimeout(() => {
+                successMsg.classList.remove('active');
+                errorMsg.classList.remove('active');
+            }, 5000);
+        }
+        
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        async function analyzeFile() {
+            const file = document.getElementById('file').files[0];
+            
+            if (!file) {
+                showMessage('error', '❌ Please select a CSV file');
+                return;
+            }
+            
+            const formData = new FormData();
             formData.append('file', file);
             
-            fetch('/api/analyze', {
-                method: 'POST',
-                body: formData
-            })
-            .then(r => r.json())
-            .then(data => {
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                document.getElementById('loading').classList.remove('active');
+                
                 if (data.success) {
-                    let report = data.report;
-                    document.getElementById('results').innerHTML = `
-                        <h2>Results</h2>
-                        <div class="metric"><strong>Mean:</strong> ${report.basics.mean}</div>
-                        <div class="metric"><strong>Std Dev:</strong> ${report.statistical_rigor.std_dev}</div>
-                        <div class="metric"><strong>Outliers:</strong> ${report.outliers.count}</div>
-                        <div class="metric"><strong>Quality:</strong> ${report.data_quality.rating}</div>
-                        <img src="${data.chart}" style="max-width: 100%; margin-top: 20px;">
-                    `;
+                    displayResults(data);
+                    showMessage('success', `✅ Analysis complete! Analyzed column: ${data.column_analyzed}`);
+                } else {
+                    showMessage('error', `❌ Error: ${data.error}`);
                 }
-            });
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                showMessage('error', `❌ Error: ${error.message}`);
+            }
+        }
+        
+        function displayResults(data) {
+            const report = data.report;
+            
+            // Basic stats
+            document.getElementById('count').textContent = report.basics.count;
+            document.getElementById('mean').textContent = report.basics.mean.toFixed(2);
+            document.getElementById('median').textContent = report.basics.median.toFixed(2);
+            document.getElementById('min').textContent = report.basics.min.toFixed(2);
+            document.getElementById('max').textContent = report.basics.max.toFixed(2);
+            document.getElementById('range').textContent = (report.basics.max - report.basics.min).toFixed(2);
+            
+            // Statistical rigor
+            document.getElementById('stdDev').textContent = report.statistical_rigor.std_dev.toFixed(4);
+            document.getElementById('variance').textContent = report.statistical_rigor.variance.toFixed(4);
+            document.getElementById('cv').textContent = report.statistical_rigor.coefficient_of_variation?.toFixed(4) || 'N/A';
+            
+            const ci = report.statistical_rigor.confidence_interval_95;
+            document.getElementById('ciRange').textContent = `[${ci.lower.toFixed(2)}, ${ci.upper.toFixed(2)}]`;
+            document.getElementById('ciInterpretation').textContent = ci.interpretation;
+            
+            // Outliers
+            document.getElementById('outlierCount').textContent = report.outliers.count;
+            document.getElementById('outlierPercent').textContent = `${report.outliers.percentage.toFixed(2)}%`;
+            
+            // Quality
+            document.getElementById('qualityScore').textContent = report.data_quality.score.toFixed(1);
+            document.getElementById('qualityRating').textContent = report.data_quality.rating;
+            document.getElementById('completeness').textContent = report.data_quality.completeness;
+            
+            // Chart
+            const chartImg = document.getElementById('chart');
+            chartImg.src = data.chart;
+            chartImg.style.display = 'block';
+            
+            // Show results
+            document.getElementById('results').classList.add('active');
+        }
+        
+        function resetForm() {
+            document.getElementById('file').value = '';
+            document.getElementById('filename').textContent = '';
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('loading').classList.remove('active');
         }
     </script>
 </body>
