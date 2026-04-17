@@ -95,3 +95,48 @@ def create_visual_report(filename):
 
     except Exception as e:
         print(f"❌ Visualization Error: {e}")
+
+import pandas as pd
+import numpy as np
+
+def safe_load_and_clean(file_path):
+    """Loads data safely, handles missing values, and profiles the dataset."""
+    try:
+        df = pd.read_csv(file_path)
+        
+        # Point 2: Clean - Drop completely empty rows
+        df.dropna(how='all', inplace=True)
+        
+        # Point 1 & 2: Isolate numbers and fill missing values with the median
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        if not numeric_cols.empty:
+            df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
+        
+        # Point 2: Profile - Basic info and shape
+        profile = {
+            "shape": df.shape,
+            "columns": list(df.columns)
+        }
+        return df, profile
+        
+    except FileNotFoundError:
+        return None, "Error: The file was not found. Please check the path."
+    except pd.errors.EmptyDataError:
+        return None, "Error: The file is empty."
+    except Exception as e:
+        return None, f"An unexpected error occurred: {e}"
+
+def generate_advanced_stats(df):
+    """Calculates advanced stats (Std Dev, Variance, Correlation) on numeric columns."""
+    # Point 1: Type Isolation
+    numeric_df = df.select_dtypes(include=[np.number])
+    if numeric_df.empty:
+        return "No numeric columns available for statistical analysis."
+
+    # Point 3: Advanced Statistical Suite
+    stats = {
+        "std_dev": numeric_df.std().round(2).to_dict(),
+        "variance": numeric_df.var().round(2).to_dict(),
+        "correlation": numeric_df.corr().round(2).to_dict()
+    }
+    return stats
