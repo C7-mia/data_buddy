@@ -26,3 +26,10 @@ dev = [
     "black>=22.0.0",
     "flake8>=4.0.0",
 ]
+
+[tool.setuptools.packages.find]
+include = ["data_buddy*"]
+exclude = ["extracted_data*", "templates*", "api*"]
+
+[tool.setuptools]
+py-modules = ["project_analyzer"]
