@@ -62,7 +62,9 @@ class StatisticalAnalyzer:
         outliers = []
         for i, (val, z) in enumerate(zip(self.data, z_scores)):
             if z > threshold:
-                outliers.append({"index": i, "value": val, "z_score": z, "method": "z-score"})
+                outliers.append(
+                    {"index": i, "value": val, "z_score": z, "method": "z-score"}
+                )
         return outliers
 
     def get_data_quality_report(self):
@@ -84,14 +86,20 @@ class StatisticalAnalyzer:
             "variability": {
                 "variance": float(self.get_variance()),
                 "std_dev": float(self.get_std_dev()),
-                "coefficient_of_variation": float(self.get_std_dev() / np.mean(self.data))
-                if np.mean(self.data) != 0
-                else 0,
+                "coefficient_of_variation": (
+                    float(self.get_std_dev() / np.mean(self.data))
+                    if np.mean(self.data) != 0
+                    else 0
+                ),
             },
             "outliers": {
                 "iqr_outliers": len(self.detect_outliers_iqr()),
                 "zscore_outliers": len(self.detect_outliers_zscore()),
-                "outlier_percentage": (len(self.detect_outliers_iqr()) / self.n * 100) if self.n > 0 else 0,
+                "outlier_percentage": (
+                    (len(self.detect_outliers_iqr()) / self.n * 100)
+                    if self.n > 0
+                    else 0
+                ),
             },
         }
         quality_report["quality_score"] = self._calculate_quality_score(quality_report)
@@ -139,7 +147,9 @@ class StatisticalAnalyzer:
             },
             "outliers": {
                 "count": len(outliers),
-                "percentage": round((len(outliers) / self.n * 100), 2) if self.n > 0 else 0,
+                "percentage": (
+                    round((len(outliers) / self.n * 100), 2) if self.n > 0 else 0
+                ),
                 "details": outliers[:5],
             },
             "data_quality": {
