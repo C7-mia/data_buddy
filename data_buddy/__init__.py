@@ -1,13 +1,39 @@
- from .project_analyzer import (
-    get_average, get_median, get_min, get_max, get_mode, 
-    add, sub, mul, div, power, sqrt, 
-    run_no_code_analysis, generate_notebook_code, create_visual_report
+from .project_analyzer import (
+    add,
+    create_visual_report,
+    div,
+    generate_advanced_stats,
+    generate_notebook_code,
+    get_average,
+    get_max,
+    get_median,
+    get_min,
+    get_mode,
+    mul,
+    power,
+    retry_with_exponential_backoff,
+    run_no_code_analysis,
+    sqrt,
+    sub,
 )
 from .statistics_engine import StatisticalAnalyzer
 
 __all__ = [
-    'get_average', 'get_median', 'get_min', 'get_max', 'get_mode',
-    'add', 'sub', 'mul', 'div', 'power', 'sqrt',
-    'run_no_code_analysis', 'generate_notebook_code', 'create_visual_report',
-    'StatisticalAnalyzer'
+    "get_average",
+    "get_median",
+    "get_min",
+    "get_max",
+    "get_mode",
+    "add",
+    "sub",
+    "mul",
+    "div",
+    "power",
+    "sqrt",
+    "run_no_code_analysis",
+    "generate_advanced_stats",
+    "generate_notebook_code",
+    "create_visual_report",
+    "retry_with_exponential_backoff",
+    "StatisticalAnalyzer",
 ]

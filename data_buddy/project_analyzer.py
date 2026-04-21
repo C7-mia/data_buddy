@@ -1,78 +1,198 @@
-import pandas as pd
-import numpy as np
-import zipfile
-import os
 import json
+import os
+import random
+import time
+import zipfile
+from typing import Any, Callable, Dict, Optional, Tuple
 
-# Try to import extra libraries for PNG and PDF support
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 try:
     from PIL import Image
-except ImportError:
+except ImportError:  # optional dependency
     Image = None
 
-def safe_load_and_clean(file_name):
+
+# ---------- Retry utilities ----------
+TRANSIENT_EXCEPTIONS = (
+    TimeoutError,
+    ConnectionError,
+    OSError,
+)
+
+
+def is_transient_error(exc: Exception) -> bool:
+    """Best-effort classification for retryable failures."""
+    if isinstance(exc, TRANSIENT_EXCEPTIONS):
+        return True
+
+    message = str(exc).lower()
+    transient_markers = (
+        "tempor",
+        "timeout",
+        "timed out",
+        "rate limit",
+        "too many requests",
+        "throttl",
+        "connection reset",
+        "connection aborted",
+        "try again",
+        "service unavailable",
+    )
+    return any(marker in message for marker in transient_markers)
+
+
+def retry_with_exponential_backoff(
+    operation: Callable[[], Any],
+    *,
+    max_attempts: int = 4,
+    base_delay_seconds: float = 0.25,
+    max_delay_seconds: float = 3.0,
+    jitter_seconds: float = 0.25,
+    retry_on: Callable[[Exception], bool] = is_transient_error,
+) -> Any:
     """
-    The Universal Loader: Now detects .csv, .ipynb, .png, and .pdf
+    Execute an operation with automatic retries using exponential backoff + jitter.
     """
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            return operation()
+        except Exception as exc:
+            if attempt >= max_attempts or not retry_on(exc):
+                raise
+
+            delay = min(max_delay_seconds, base_delay_seconds * (2 ** (attempt - 1)))
+            delay += random.uniform(0, jitter_seconds)
+            time.sleep(delay)
+
+
+# ---------- Basic stats + arithmetic ----------
+def _to_numeric_array(data) -> np.ndarray:
+    arr = np.array(list(data), dtype=float)
+    if arr.size == 0:
+        raise ValueError("Data cannot be empty")
+    return arr
+
+
+def get_average(data):
+    arr = _to_numeric_array(data)
+    return float(np.mean(arr))
+
+
+def get_median(data):
+    arr = _to_numeric_array(data)
+    return float(np.median(arr))
+
+
+def get_min(data):
+    arr = _to_numeric_array(data)
+    return float(np.min(arr))
+
+
+def get_max(data):
+    arr = _to_numeric_array(data)
+    return float(np.max(arr))
+
+
+def get_mode(data):
+    arr = _to_numeric_array(data)
+    values, counts = np.unique(arr, return_counts=True)
+    return float(values[np.argmax(counts)])
+
+
+def add(a, b):
+    return a + b
+
+
+def sub(a, b):
+    return a - b
+
+
+def mul(a, b):
+    return a * b
+
+
+def div(a, b):
+    if b == 0:
+        raise ZeroDivisionError("Cannot divide by zero")
+    return a / b
+
+
+def power(a, b):
+    return a**b
+
+
+def sqrt(x):
+    if x < 0:
+        raise ValueError("Cannot square-root a negative value")
+    return float(np.sqrt(x))
+
+
+# ---------- File loading + cleaning ----------
+def safe_load_and_clean(file_name: str):
+    """Universal loader for csv/ipynb/png/pdf with transient retry on read."""
     ext = os.path.splitext(file_name)[1].lower()
-    
+
     try:
-        # 1. HANDLE CSV
-        if ext == '.csv':
-            df = pd.read_csv(file_name)
-            if df.empty: return None, "Error: CSV is empty."
-            profile = {'shape': df.shape, 'columns': list(df.columns), 'type': 'Tabular Data'}
+        if ext == ".csv":
+            df = retry_with_exponential_backoff(lambda: pd.read_csv(file_name))
+            if df.empty:
+                return None, "Error: CSV is empty."
+            profile = {
+                "shape": df.shape,
+                "columns": list(df.columns),
+                "type": "Tabular Data",
+            }
             return df, profile
 
-        # 2. HANDLE NOTEBOOKS (.ipynb)
-        elif ext == '.ipynb':
+        if ext == ".ipynb":
             return None, extract_csv_from_ipynb(file_name)
 
-        # 3. HANDLE IMAGES (.png)
-        elif ext == '.png':
+        if ext == ".png":
             if Image:
                 img = Image.open(file_name)
                 return None, f"🎨 Image Detected: {img.size} size, {img.format} format."
             return None, "🎨 Image found, but 'Pillow' library is not installed."
 
-        # 4. HANDLE PDF
-        elif ext == '.pdf':
+        if ext == ".pdf":
             return None, "📄 PDF Detected. (Full text extraction requires 'PyPDF2' library)."
 
-        else:
-            return None, f"Error: Format {ext} not supported yet."
-
+        return None, f"Error: Format {ext} not supported yet."
     except Exception as e:
         return None, f"System Error: {str(e)}"
 
-def universal_cleaner(df):
-    """Automatically detects and fixes common data flaws in any dataset."""
-    if df is None: return None
-    
-    # 1. Handle Strings in Numeric Columns
+
+def universal_cleaner(df: Optional[pd.DataFrame]):
+    if df is None:
+        return None
+
+    df = df.copy()
+
     for col in df.columns:
-        if df[col].dtype == 'object':
-            converted = pd.to_numeric(df[col], errors='coerce')
+        if df[col].dtype == "object":
+            converted = pd.to_numeric(df[col], errors="coerce")
             if converted.notnull().sum() > (len(df) * 0.8):
                 df[col] = converted.fillna(converted.median())
 
-    # 2. Logic Protection (Absolutes)
     numeric_cols = df.select_dtypes(include=[np.number]).columns
     for col in numeric_cols:
         if (df[col] >= 0).sum() > (len(df) * 0.95):
             df[col] = df[col].abs()
 
-    # 3. Universal Text Standardization (Title Case)
-    text_cols = df.select_dtypes(include=['object']).columns
+    text_cols = df.select_dtypes(include=["object"]).columns
     for col in text_cols:
         df[col] = df[col].astype(str).str.strip().str.title()
-        
+
     return df
 
-def unpack_and_list_data(zip_name):
-    """Unzips a file and finds all usable content inside."""
+
+def unpack_and_list_data(zip_name: str):
     try:
-        with zipfile.ZipFile(zip_name, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_name, "r") as zip_ref:
             folder_name = "extracted_data"
             zip_ref.extractall(folder_name)
             all_files = os.listdir(folder_name)
@@ -80,75 +200,113 @@ def unpack_and_list_data(zip_name):
     except Exception as e:
         return None, f"Unzip Error: {str(e)}"
 
-def extract_csv_from_ipynb(ipynb_file):
-    """Attempts to scan a Notebook for data structures."""
+
+def extract_csv_from_ipynb(ipynb_file: str) -> str:
     try:
-        with open(ipynb_file, 'r', encoding='utf-8') as f:
+        with open(ipynb_file, "r", encoding="utf-8") as f:
             nb = json.load(f)
-            code_cells = 0
-            for cell in nb['cells']:
-                if cell['cell_type'] == 'code':
-                    code_cells += 1
-            return f"📓 Notebook detected with {code_cells} code cells. Run it to generate CSVs."
+
+        code_cells = sum(1 for cell in nb.get("cells", []) if cell.get("cell_type") == "code")
+        return f"📓 Notebook detected with {code_cells} code cells. Run it to generate CSVs."
     except Exception as e:
         return f"Error reading notebook: {e}"
 
 
-# --- PART 3: Statistical Rigor Analysis ---
-def run_rigorous_analysis(filename):
-    """
-    Run comprehensive statistical analysis with confidence intervals, 
-    variance, and outlier detection.
-    """
-    from .statistics_engine import StatisticalAnalyzer
-    
-    try:
-        with open(filename, 'r') as file:
-            data = [float(line.strip()) for line in file if line.strip()]
-        
-        if not data:
-            print("❌ Error: File is empty.")
-            return
-        
-        analyzer = StatisticalAnalyzer(data)
-        report = analyzer.get_summary_report()
-        
-        print(f"\n{'='*60}")
-        print(f"📊 RIGOROUS STATISTICAL ANALYSIS: {filename}")
-        print(f"{'='*60}\n")
-        
-        # Basic statistics
-        print("📈 BASIC STATISTICS:")
-        print(f"  • Sample Size: {report['basics']['count']}")
-        print(f"  • Mean: {report['basics']['mean']}")
-        print(f"  • Median: {report['basics']['median']}")
-        print(f"  • Range: [{report['basics']['min']}, {report['basics']['max']}]")
-        
-        # Statistical rigor
-        print("\n📐 STATISTICAL RIGOR:")
-        print(f"  • Std Dev: {report['statistical_rigor']['std_dev']}")
-        print(f"  • Variance: {report['statistical_rigor']['variance']}")
-        ci = report['statistical_rigor']['confidence_interval_95']
-        print(f"  • 95% CI: [{ci['lower']}, {ci['upper']}]")
-        print(f"  • {ci['interpretation']}")
-        
-        # Outliers
-        print("\n⚠️  OUTLIER DETECTION:")
-        print(f"  • Outliers Found: {report['outliers']['count']} ({report['outliers']['percentage']}%)")
-        if report['outliers']['details']:
-            print(f"  • Examples:")
-            for outlier in report['outliers']['details']:
-                print(f"    - Position {outlier['index']}: {outlier['value']} ({outlier['type']})")
-        
-        # Data Quality
-        print("\n✅ DATA QUALITY ASSESSMENT:")
-        print(f"  • Quality Score: {report['data_quality']['score']}/100 {report['data_quality']['rating']}")
-        print(f"  • Completeness: {report['data_quality']['completeness']}")
-        
-        print(f"\n{'='*60}\n")
-        
-        return analyzer
-        
-    except Exception as e:
-        print(f"❌ Analysis Error: {e}")
-        return None
+
+
+def generate_advanced_stats(df: pd.DataFrame) -> Dict[str, Any]:
+    """Return dataframe-level stats used by legacy tests and API clients."""
+    if df is None or df.empty:
+        return {"error": "Empty dataframe"}
+
+    cleaned = universal_cleaner(df)
+    numeric_cols = cleaned.select_dtypes(include=[np.number]).columns.tolist()
+    stats = {
+        "shape": cleaned.shape,
+        "columns": list(cleaned.columns),
+        "numeric_columns": numeric_cols,
+        "summary": {},
+    }
+
+    for col in numeric_cols:
+        series = cleaned[col].dropna()
+        stats["summary"][col] = {
+            "mean": float(series.mean()),
+            "median": float(series.median()),
+            "std": float(series.std(ddof=1)) if len(series) > 1 else 0.0,
+            "min": float(series.min()),
+            "max": float(series.max()),
+        }
+
+    return stats
+
+# ---------- No-code UX helpers ----------
+def run_no_code_analysis(file_name: str) -> Dict[str, Any]:
+    df, profile = safe_load_and_clean(file_name)
+    if df is None:
+        return {"success": False, "message": str(profile)}
+
+    cleaned = universal_cleaner(df)
+    numeric_cols = cleaned.select_dtypes(include=[np.number]).columns.tolist()
+    if not numeric_cols:
+        return {
+            "success": True,
+            "profile": profile,
+            "message": "No numeric columns found.",
+        }
+
+    summary = {
+        col: {
+            "mean": float(cleaned[col].mean()),
+            "median": float(cleaned[col].median()),
+            "min": float(cleaned[col].min()),
+            "max": float(cleaned[col].max()),
+        }
+        for col in numeric_cols
+    }
+
+    return {"success": True, "profile": profile, "summary": summary}
+
+
+def create_visual_report(file_name: str, output_path: str = "business_chart.png") -> str:
+    df, _ = safe_load_and_clean(file_name)
+    if df is None:
+        raise ValueError("Could not load a tabular dataset from the provided file")
+
+    cleaned = universal_cleaner(df)
+    numeric_cols = cleaned.select_dtypes(include=[np.number]).columns.tolist()
+    if not numeric_cols:
+        raise ValueError("No numeric columns available for charting")
+
+    col = numeric_cols[0]
+    ax = cleaned[col].plot(kind="line", title=f"Trend: {col}")
+    ax.set_xlabel("Index")
+    ax.set_ylabel(col)
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+    return output_path
+
+
+def generate_notebook_code(file_name: str, output_path: str = "generated_analysis.py") -> str:
+    code = f'''\
+# --- Generated by Data_buddy ---
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+df = pd.read_csv("{file_name}")
+print("📊 Data Summary:")
+print(df.describe(include='all'))
+
+numeric_cols = df.select_dtypes(include=['number']).columns
+if len(numeric_cols) > 0:
+    target = numeric_cols[0]
+    df[target].plot(kind='line', title=f'Analysis Trend: {{target}}')
+    plt.show()
+else:
+    print("No numeric columns found for plotting.")
+'''
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(code)
+    return output_path
