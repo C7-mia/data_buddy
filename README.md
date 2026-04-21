@@ -1,82 +1,148 @@
+# Data Buddy 📊
 
-Markdown
-# Data_Buddy 📊
+**Data Buddy** is a no-code, open-source data analysis toolkit for business users, analysts, and developers who want fast insights from raw files without building pipelines from scratch.
 
-**A No-Code Data Analysis Toolkit** for anyone who wants professional insights without writing code.
+It combines a simple API with robust statistical tooling, automatic retry behavior for transient failures, and report-generation utilities.
 
-## 🎯 What Problem Does It Solve?
+## Features
 
-Many business users have CSV files but lack Python skills. Data_Buddy analyzes your data and generates insights—instantly, with zero coding required.
+- **No-code statistical analysis API** via `run_no_code_analysis(...)` for one-call summaries from tabular files.
+- **Advanced statistical engine** with confidence intervals, variance/standard deviation, outlier detection (IQR + z-score), and data quality scoring through `StatisticalAnalyzer`.
+- **Automatic retry logic** (exponential backoff + jitter) for transient read/IO failures during analysis workflows.
+- **Multi-format loading** support for:
+  - CSV datasets (fully analyzed)
+  - Jupyter notebooks (`.ipynb`) with notebook metadata hints
+  - Images (`.png`) with file metadata hints
+  - PDF files (`.pdf`) with extraction guidance
+- **Report generation utilities**:
+  - Line-chart visual reports (`business_chart.png` by default)
+  - Auto-generated Python analysis script (`generated_analysis.py`)
 
-## ✨ Key Features
+## Architecture Overview
 
-- **📈 Statistical Analysis**: Average, Median, Mode, Min, Max, Range, Std Dev
-- **🧮 Arithmetic Engine**: Add, subtract, multiply, divide, power, square root
-- **🎨 Professional Charts**: Auto-generates trend visualization (PNG format)
-- **📓 Auto-Generated Notebooks**: Creates Python code for further analysis
-- **⚡ One-Line Analysis**: `data_buddy.run_no_code_analysis("file.csv")`
+Data Buddy is organized around two core analysis layers:
 
-## 🚀 Quick Start
+- **`data_buddy/project_analyzer.py`**
+  - Public no-code operations (`run_no_code_analysis`, `create_visual_report`, `generate_notebook_code`)
+  - Resilient file loading (`safe_load_and_clean`)
+  - Retry helpers (`retry_with_exponential_backoff`, `is_transient_error`)
+  - Numeric/statistics helper functions
+- **`data_buddy/statistics_engine.py`**
+  - `StatisticalAnalyzer` class for deeper statistical rigor:
+    - Confidence intervals
+    - Outlier detection (IQR and z-score)
+    - Distribution and variability metrics
+    - Data quality report and quality rating
 
-### Installation
+Both layers are exported from `data_buddy/__init__.py` so open-source users can access either the no-code workflow or a deeper statistics API from a single package import.
+
+## Automatic Retry Logic (Exponential Backoff + Jitter)
+
+Data Buddy now includes built-in retry behavior for transient failures during data loading/analysis.
+
+### How it works
+
+- `retry_with_exponential_backoff(...)` wraps operations that may fail temporarily.
+- Delay grows exponentially by attempt (`base_delay_seconds * 2^(attempt-1)`), capped by `max_delay_seconds`.
+- A random jitter component is added to avoid synchronized retry spikes.
+- Retries stop when:
+  - the maximum attempt count is reached, or
+  - an error is classified as non-transient.
+
+### Transient error handling
+
+An error is treated as retryable when it is:
+- a known transient exception type (`TimeoutError`, `ConnectionError`, `OSError`), or
+- an exception message containing transient markers such as timeout/rate-limit/service-unavailable style signals.
+
+### Where retries are applied
+
+`safe_load_and_clean(...)` applies this mechanism to CSV reads (`pandas.read_csv`) so short-lived IO/network-like issues do not immediately fail user analysis flows.
+
+## Installation
+
+Data Buddy uses a modern **`pyproject.toml`** build configuration with `setuptools.build_meta`.
+
+### Editable install (recommended for contributors)
 
 ```bash
-pip install -e .
-Basic Usage
-Python
+python -m pip install -e .
+```
+
+### Optional development tools
+
+```bash
+python -m pip install -e .[dev]
+```
+
+This installs linting/format/test tooling defined under optional dependencies (e.g., `pytest`, `black`, `flake8`).
+
+## Quick Start
+
+```python
 import data_buddy
 
-# Analyze your CSV file
-data_buddy.run_no_code_analysis("expenses.csv")
+# One-call no-code analysis
+result = data_buddy.run_no_code_analysis("expenses.csv")
+print(result)
 
-# Generate a chart
-data_buddy.create_visual_report("expenses.csv")
+# Generate a visual report
+chart_path = data_buddy.create_visual_report("expenses.csv")
+print(chart_path)  # business_chart.png
 
-# Get the Python notebook code for deeper analysis
-data_buddy.generate_notebook_code("expenses.csv")
-What You Get
-Console Report: Summary statistics in your terminal
-business_chart.png: Professional trend visualization
-generated_analysis.py: Reusable Python code
-📋 Requirements
-Python 3.7+
-pandas
-matplotlib
-🏗️ Project Structure
-Code
+# Generate reusable Python analysis code
+code_path = data_buddy.generate_notebook_code("expenses.csv")
+print(code_path)   # generated_analysis.py
+```
+
+## Statistics API (StatisticalAnalyzer)
+
+Use `StatisticalAnalyzer` when you want deeper statistical diagnostics.
+
+```python
+from data_buddy import StatisticalAnalyzer
+
+analyzer = StatisticalAnalyzer([85, 90, 78, 92, 88, 500])
+report = analyzer.get_summary_report()
+print(report["data_quality"])
+```
+
+Useful methods include:
+- `get_variance()`, `get_std_dev()`
+- `get_confidence_interval(confidence=0.95)`
+- `detect_outliers_iqr()`, `detect_outliers_zscore(threshold=3)`
+- `get_data_quality_report()`, `get_summary_report()`
+
+## Development
+
+### Run tests
+
+Data Buddy includes a pytest suite for the updated architecture.
+
+```bash
+pytest -q
+```
+
+### Typical contributor flow
+
+```bash
+python -m pip install -e .[dev]
+pytest -q
+```
+
+## Project Structure
+
+```text
 data_buddy/
-├── main_app.py           # User-friendly interface
-├── project_analyzer.py   # Statistical & visualization logic
-└── data_buddy/           # Core package
-💡 Use Cases
-Expense Analysis: Track spending patterns
-Sales Data: Identify trends and averages
-Survey Results: Quick statistical summaries
-Quick Reports: Generate charts for presentations
-⚠️ Limitations
-Works with numeric CSV columns only
-Basic statistical functions (no advanced ML)
-Single-sheet CSV files recommended
-🤝 Contributing
-Found a bug? Have a feature idea? Open an issue or pull request!
+├── data_buddy/
+│   ├── __init__.py
+│   ├── project_analyzer.py
+│   └── statistics_engine.py
+├── pyproject.toml
+├── README.md
+└── test_*.py
+```
 
-📄 License
-[Add your license here]
+## License
 
-📧 Contact
-Created by: Akena Nicholas
-
-Code
-
----
-
-## 🔧 **Next Steps I Recommend**
-
-1. **Update README immediately** - use the structure above
-2. **Add error messages** - validate CSV format on load
-3. **Expand test coverage** - test with edge cases
-4. **Add usage examples** - show real data + real output
-5. **Create a CHANGELOG** - document what's working
-6. **Add docstrings** - document all public functions
-
-Would you like me to **create an improved README.md file** and push it to your repository,
+Add your preferred open-source license (for example, MIT) in this repository.
