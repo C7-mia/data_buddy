@@ -1,35 +1,46 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "data_buddy"
-version = "2.0.0"
-authors = [
-  { name="Akena Nicholas", email="akidirita4@gmail.com" },
-]
-description = "Professional no-code data analysis toolkit with statistical rigor."
+name = "data-buddy"
+version = "3.0.0"
+description = "No-code data intelligence layer for Python."
+readme = "README.md"
 requires-python = ">=3.9"
+authors = [{ name = "Data Buddy Contributors" }]
 dependencies = [
-    "pandas>=2.0.0",
-    "matplotlib>=3.7.0",
-    "numpy>=1.24.0",
-    "scipy>=1.11.0",
-    "flask>=2.3.0",
-    "flask-cors>=4.0.0",
-    "gunicorn>=21.0.0",
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "scipy>=1.11",
 ]
 
 [project.optional-dependencies]
+viz = [
+  "matplotlib>=3.7",
+  "seaborn>=0.13",
+]
+ml = [
+  "statsmodels>=0.14",
+]
 dev = [
-    "pytest>=7.0.0",
-    "black>=22.0.0",
-    "flake8>=4.0.0",
+  "pytest>=7.4",
+  "black>=24.0",
+  "ruff>=0.5",
 ]
 
-[tool.setuptools.packages.find]
-include = ["data_buddy*"]
-exclude = ["extracted_data*", "templates*", "api*"]
+[project.scripts]
+data-buddy = "data_buddy.core.cli:main"
 
 [tool.setuptools]
-py-modules = ["project_analyzer"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["data_buddy*"]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
