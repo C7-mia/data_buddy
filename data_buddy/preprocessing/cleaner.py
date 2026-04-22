@@ -5,7 +5,9 @@ from __future__ import annotations
 import pandas as pd
 
 
-def smart_clean(df: pd.DataFrame, strategy_override: dict[str, str] | None = None) -> pd.DataFrame:
+def smart_clean(
+    df: pd.DataFrame, strategy_override: dict[str, str] | None = None
+) -> pd.DataFrame:
     """Automatically clean missing values using distribution-aware rules.
 
     Args:

@@ -30,9 +30,13 @@ def generate_insight(df: pd.DataFrame, target: str | None = None) -> dict:
     summaries = {
         col: {
             "average": float(numeric[col].mean()),
-            "volatility": float(numeric[col].std(ddof=1) if len(numeric[col]) > 1 else 0.0),
+            "volatility": float(
+                numeric[col].std(ddof=1) if len(numeric[col]) > 1 else 0.0
+            ),
             "business_note": (
-                "Stable metric" if numeric[col].std(ddof=0) < abs(numeric[col].mean() * 0.1) else "Shows meaningful fluctuation"
+                "Stable metric"
+                if numeric[col].std(ddof=0) < abs(numeric[col].mean() * 0.1)
+                else "Shows meaningful fluctuation"
             ),
         }
         for col in numeric.columns

@@ -11,7 +11,9 @@ def main() -> None:
     """Run a simplified Data Buddy CLI workflow."""
     parser = argparse.ArgumentParser(description="Data Buddy no-code data workflow")
     parser.add_argument("file", help="Path or URL to dataset")
-    parser.add_argument("--target", help="Optional target column for insight", default=None)
+    parser.add_argument(
+        "--target", help="Optional target column for insight", default=None
+    )
     args = parser.parse_args()
 
     buddy = Buddy().load(args.file).clean()

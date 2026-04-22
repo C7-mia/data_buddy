@@ -24,7 +24,11 @@ class StatisticalAnalyzer:
         std_err = stats.sem(self.data)
         t_score = stats.t.ppf((1 + confidence) / 2, self.n - 1)
         margin = t_score * std_err
-        return {"mean": mean, "lower_bound": mean - margin, "upper_bound": mean + margin}
+        return {
+            "mean": mean,
+            "lower_bound": mean - margin,
+            "upper_bound": mean + margin,
+        }
 
     def detect_outliers_iqr(self):
         q1 = np.percentile(self.data, 25)
@@ -39,7 +43,10 @@ class StatisticalAnalyzer:
         outliers = self.detect_outliers_iqr()
         return {
             "basics": {"count": self.n, "mean": round(np.mean(self.data), 2)},
-            "statistical_rigor": {"std_dev": round(self.get_std_dev(), 2), "confidence_interval_95": ci},
+            "statistical_rigor": {
+                "std_dev": round(self.get_std_dev(), 2),
+                "confidence_interval_95": ci,
+            },
             "outliers": {"count": len(outliers)},
             "data_quality": {"score": 100 - min(100, len(outliers) * 5)},
         }
