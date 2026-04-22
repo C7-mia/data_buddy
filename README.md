@@ -46,3 +46,7 @@ pip install data-buddy[ml]
 ```bash
 data-buddy expenses.csv --target amount
 ```
+
+## License
+
+MIT License. See `LICENSE` for details.
