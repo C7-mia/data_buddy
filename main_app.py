@@ -1,12 +1,13 @@
-import sys
 import os
+import sys
 
 # Add core engine to path
-sys.path.append('./data_buddy')
+sys.path.append("./data_buddy")
 try:
     import project_analyzer
 except ImportError:
     print("❌ Error: 'project_analyzer.py' not found in 'data_buddy' folder.")
+
 
 # --- PART 1: The Statistical Tools ---
 def get_iqr_outliers(series):
@@ -19,6 +20,7 @@ def get_iqr_outliers(series):
     outliers = series[(series < lower_bound) | (series > upper_bound)]
     return outliers.tolist()
 
+
 def get_confidence_interval(series):
     """Calculates a 95% confidence interval for a numeric column."""
     n = len(series)
@@ -26,17 +28,18 @@ def get_confidence_interval(series):
         return (0, 0)
     mean = series.mean()
     std_err = series.std() / (n**0.5)
-    h = std_err * 1.96 
+    h = std_err * 1.96
     return (round(float(mean - h), 2), round(float(mean + h), 2))
+
 
 # --- PART 2: The Universal Analysis Engine ---
 def run_outstanding_analysis(file_name):
     print(f"\n🌍 Universal Data_Buddy: Analyzing {file_name}")
-    print("="*55)
-    
+    print("=" * 55)
+
     # Load and Clean (Engine now handles CSV, IPYNB, PNG, PDF)
     df, profile = project_analyzer.safe_load_and_clean(file_name)
-    
+
     if df is None:
         # If it's not a DataFrame, it might be a message about a PNG/PDF/Notebook
         print(f"ℹ️  Result: {profile}")
@@ -46,48 +49,53 @@ def run_outstanding_analysis(file_name):
     df = project_analyzer.universal_cleaner(df)
 
     # 1. Discovery Phase
-    print(f"🔎 DISCOVERY: Found {df.shape[1]} variables and {df.shape[0]} observations.")
-    
+    print(
+        f"🔎 DISCOVERY: Found {df.shape[1]} variables and {df.shape[0]} observations."
+    )
+
     # 2. Deep Insight Phase
-    numeric_cols = df.select_dtypes(include=['number']).columns
+    numeric_cols = df.select_dtypes(include=["number"]).columns
     if len(numeric_cols) == 0:
         print("📊 INFO: No numeric columns found for statistical analysis.")
-    
+
     for col in numeric_cols:
         print(f"\n📊 INSIGHT: {col}")
         mean_val = df[col].mean()
         ci_low, ci_high = get_confidence_interval(df[col])
         outliers = get_iqr_outliers(df[col])
-        
+
         print(f"  - Average Value: {mean_val:.2f}")
         print(f"  - 95% Confidence: ({ci_low} to {ci_high})")
-        
+
         if outliers:
-            print(f"  - 💡 ALERT: Found {len(outliers)} unusual data points (Outliers).")
+            print(
+                f"  - 💡 ALERT: Found {len(outliers)} unusual data points (Outliers)."
+            )
         else:
             print("  - ✅ Consistency: Data is statistically stable.")
 
-    print("\n" + "="*55)
+    print("\n" + "=" * 55)
     print("Strategy: Data-driven solutions ready.")
+
 
 # --- PART 3: Interactive Start ---
 if __name__ == "__main__":
     # LOOK FOR BOTH CSV AND ZIP FILES
-    files = [f for f in os.listdir('.') if f.endswith('.csv') or f.endswith('.zip')]
-    
+    files = [f for f in os.listdir(".") if f.endswith(".csv") or f.endswith(".zip")]
+
     if not files:
         print("❌ No data files found in this folder!")
     else:
         print("Available Problems to Solve:", files)
         target = input("\n📁 Enter the filename (CSV or ZIP): ")
-        
+
         if os.path.exists(target):
             # Special logic if the user picks a ZIP
-            if target.endswith('.zip'):
+            if target.endswith(".zip"):
                 print(f"📦 Unzipping {target}...")
                 folder, contents = project_analyzer.unpack_and_list_data(target)
                 print(f"✅ Extracted to '{folder}'. Found: {contents}")
-                
+
                 # Ask which file inside the ZIP to analyze
                 if contents:
                     sub_file = input("Which file from the ZIP should I analyze? ")
