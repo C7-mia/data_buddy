@@ -1,5 +1,3 @@
-import pandas as pd
-
 def solve_maji_ndogo_challenge(df):
     """Specific logic for the Maji Ndogo project goals."""
     results = {}

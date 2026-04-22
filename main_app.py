@@ -1,8 +1,5 @@
 import sys
-import pandas as pd
-import numpy as np
 import os
-import zipfile
 
 # Add core engine to path
 sys.path.append('./data_buddy')
@@ -25,7 +22,8 @@ def get_iqr_outliers(series):
 def get_confidence_interval(series):
     """Calculates a 95% confidence interval for a numeric column."""
     n = len(series)
-    if n < 2: return (0, 0)
+    if n < 2:
+        return (0, 0)
     mean = series.mean()
     std_err = series.std() / (n**0.5)
     h = std_err * 1.96 
@@ -67,7 +65,7 @@ def run_outstanding_analysis(file_name):
         if outliers:
             print(f"  - 💡 ALERT: Found {len(outliers)} unusual data points (Outliers).")
         else:
-            print(f"  - ✅ Consistency: Data is statistically stable.")
+            print("  - ✅ Consistency: Data is statistically stable.")
 
     print("\n" + "="*55)
     print("Strategy: Data-driven solutions ready.")
@@ -92,7 +90,7 @@ if __name__ == "__main__":
                 
                 # Ask which file inside the ZIP to analyze
                 if contents:
-                    sub_file = input(f"Which file from the ZIP should I analyze? ")
+                    sub_file = input("Which file from the ZIP should I analyze? ")
                     full_path = os.path.join(folder, sub_file)
                     if os.path.exists(full_path):
                         run_outstanding_analysis(full_path)
