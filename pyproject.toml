@@ -51,3 +51,7 @@ line-length = 88
 extend-exclude = [
   "extracted_data/*.ipynb",
 ]
+
+[tool.isort]
+profile = "black"
+line_length = 88

@@ -35,7 +35,9 @@ def detect_anomalies(df: pd.DataFrame, z_threshold: float = 3.0) -> dict:
         upper = q3 + (1.5 * iqr)
 
         std = series.std(ddof=0)
-        z_scores = np.zeros(len(series)) if std == 0 else ((series - series.mean()) / std)
+        z_scores = (
+            np.zeros(len(series)) if std == 0 else ((series - series.mean()) / std)
+        )
 
         iqr_idx = series[(series < lower) | (series > upper)].index.tolist()
         z_idx = series[np.abs(z_scores) > z_threshold].index.tolist()
@@ -54,4 +56,8 @@ def detect_anomalies(df: pd.DataFrame, z_threshold: float = 3.0) -> dict:
             },
         }
 
-    return {"columns": report, "row_count": len(df), "numeric_columns": len(numeric_cols)}
+    return {
+        "columns": report,
+        "row_count": len(df),
+        "numeric_columns": len(numeric_cols),
+    }

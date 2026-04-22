@@ -4,15 +4,14 @@ from __future__ import annotations
 
 from io import BytesIO, StringIO
 from pathlib import Path
+from urllib.error import URLError
 from urllib.parse import urlparse
+from urllib.request import urlopen
 
 import pandas as pd
-from urllib.error import URLError
-from urllib.request import urlopen
 
 from data_buddy.utils.config import BuddyConfig
 from data_buddy.utils.errors import BuddyDataLoadError
-
 
 SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".parquet"}
 
@@ -35,7 +34,9 @@ def _read_csv_with_fallback(path_or_buffer, config: BuddyConfig) -> pd.DataFrame
 
 
 def _read_csv_large(path: Path, config: BuddyConfig) -> pd.DataFrame:
-    chunks = pd.read_csv(path, chunksize=config.chunk_size, encoding=config.default_encoding)
+    chunks = pd.read_csv(
+        path, chunksize=config.chunk_size, encoding=config.default_encoding
+    )
     return pd.concat(chunks, ignore_index=True)
 
 
@@ -75,11 +76,16 @@ def load_data(path_or_url: str, config: BuddyConfig | None = None) -> pd.DataFra
             )
 
         if ext == ".csv":
-            return _read_csv_with_fallback(StringIO(content.decode(config.default_encoding, errors="replace")), config)
+            return _read_csv_with_fallback(
+                StringIO(content.decode(config.default_encoding, errors="replace")),
+                config,
+            )
         if ext in {".xlsx", ".xls"}:
             return pd.read_excel(BytesIO(content))
         if ext == ".json":
-            return pd.read_json(StringIO(content.decode(config.default_encoding, errors="replace")))
+            return pd.read_json(
+                StringIO(content.decode(config.default_encoding, errors="replace"))
+            )
         if ext == ".parquet":
             return pd.read_parquet(BytesIO(content))
 
@@ -107,4 +113,6 @@ def load_data(path_or_url: str, config: BuddyConfig | None = None) -> pd.DataFra
     if ext == ".parquet":
         return pd.read_parquet(path)
 
-    raise BuddyDataLoadError("Data Buddy could not detect a supported format for this file.")
+    raise BuddyDataLoadError(
+        "Data Buddy could not detect a supported format for this file."
+    )

@@ -5,7 +5,9 @@ from __future__ import annotations
 import pandas as pd
 
 
-def auto_view(df: pd.DataFrame, mode: str = "auto", x: str | None = None, y: str | None = None):
+def auto_view(
+    df: pd.DataFrame, mode: str = "auto", x: str | None = None, y: str | None = None
+):
     """Render an intelligent chart based on detected data type.
 
     Args:
