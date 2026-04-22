@@ -2,9 +2,9 @@ import base64
 import io
 
 import matplotlib
+
 matplotlib.use("Agg")  # Required for server environments
 import matplotlib.pyplot as plt
-
 import numpy as np
 import pandas as pd
 from flask import Flask, jsonify, request
@@ -56,10 +56,12 @@ def analyze():
         data = df[col].dropna().values
 
         if len(data) == 0:
-            return jsonify({
-                "success": False,
-                "error": f'Column "{col}" has no valid data'
-            }), 400
+            return (
+                jsonify(
+                    {"success": False, "error": f'Column "{col}" has no valid data'}
+                ),
+                400,
+            )
 
         # Statistical analysis
         analyzer = StatisticalAnalyzer(data)
@@ -73,8 +75,12 @@ def analyze():
 
         # Histogram
         axes[0].hist(data, bins=20, color="skyblue", edgecolor="black", alpha=0.7)
-        axes[0].axvline(report["basics"]["mean"], color="red", linestyle="--", label="Mean")
-        axes[0].axvline(report["basics"]["median"], color="green", linestyle="--", label="Median")
+        axes[0].axvline(
+            report["basics"]["mean"], color="red", linestyle="--", label="Mean"
+        )
+        axes[0].axvline(
+            report["basics"]["median"], color="green", linestyle="--", label="Median"
+        )
         axes[0].set_title(f"Distribution of {col}")
         axes[0].set_xlabel(col)
         axes[0].set_ylabel("Frequency")
@@ -97,19 +103,24 @@ def analyze():
         plt.close(fig)
 
         # Response
-        return jsonify({
-            "success": True,
-            "column_analyzed": col,
-            "total_columns": len(numeric_cols),
-            "available_columns": numeric_cols,
-            "report": report,
-            "chart": f"data:image/png;base64,{chart_base64}",
-            "dataset_info": {
-                "total_rows": len(df),
-                "total_columns": len(df.columns),
-                "columns": list(df.columns),
-            },
-        }), 200
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "column_analyzed": col,
+                    "total_columns": len(numeric_cols),
+                    "available_columns": numeric_cols,
+                    "report": report,
+                    "chart": f"data:image/png;base64,{chart_base64}",
+                    "dataset_info": {
+                        "total_rows": len(df),
+                        "total_columns": len(df.columns),
+                        "columns": list(df.columns),
+                    },
+                }
+            ),
+            200,
+        )
 
     except pd.errors.ParserError as e:
         return jsonify({"success": False, "error": f"CSV parsing error: {str(e)}"}), 400
