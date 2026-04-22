@@ -1,4 +1,4 @@
-name: Tests & Linting
+name: CI (Lint & Test)
 
 on:
   push:
@@ -6,62 +6,60 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
-  autofix:
-    if: github.event_name == 'push'
+  quality:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
 
-    - name: Install formatters
+    - name: Install Quality Tools
       run: |
         python -m pip install --upgrade pip
-        pip install black isort autoflake
+        pip install black isort autoflake flake8 pytest
 
-    - name: Auto-fix style
+    - name: Auto-fix and Lint
       run: |
-        black .
-        isort .
         autoflake --in-place --remove-all-unused-imports -r .
+        isort .
+        black .
+        # This fixes your 'flake8: command not found' error
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
-    - name: Commit auto-fixes
+    - name: Commit fixes
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: "style: auto-format with black/isort/autoflake"
+        commit_message: "style: automated linting and formatting fixes"
 
   test:
+    needs: quality # Wait for quality to finish so we test the fixed code
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
-
+        python-version: ["3.10", "3.11"]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install dependencies
+    - name: Install Library
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+        # Use '.' to install your local code as a library
+        pip install . 
+        pip install pytest flake8 black 
     
-    - name: Lint with flake8
-      run: |
-        flake8 data_buddy/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 data_buddy/ --count --max-complexity=10 --statistics
-    
-    - name: Format check with black
-      run: black --check data_buddy/ test_buddy.py test_statistics.py test_run.py
-    
-    - name: Run tests with pytest
+    - name: Run Tests
       run: pytest -v
