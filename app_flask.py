@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
-import json
 from data_buddy import StatisticalAnalyzer
 import base64
 import matplotlib.pyplot as plt

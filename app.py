@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from data_buddy import project_analyzer
 import solver
-import os
 
 st.set_page_config(page_title="Universal Data Buddy", page_icon="🌍")
 
